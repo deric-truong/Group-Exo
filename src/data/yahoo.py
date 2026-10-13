@@ -8,7 +8,7 @@ tickers = {"usdjpy": "JPY=X", "nikkei": "^N225", "nasdaq": "^IXIC", "sp500": "^G
 
 start_date = "2005-01-01"
 end_date = pd.Timestamp.today().strftime("%Y-%m-%d")
-output_file = Path("data") / "yahoo_prices.csv"
+output_file = Path("data") / "yahoo_prices.parquet"
 
 
 def download_prices(tickers, start, end):
@@ -36,10 +36,10 @@ def download_prices(tickers, start, end):
 
 def save_prices(prices, path):
 
-    """Save a table of prices to a CSV file, creating the folder if needed."""
+    """Save a table of prices to a Parquet file, creating the folder if needed."""
 
     path.parent.mkdir(exist_ok=True) #mkdir creates the folder, exist_ok=T prevents  error if it already exists
-    prices.to_csv(path)
+    prices.to_parquet(path)
 
 
 if __name__ == "__main__":
