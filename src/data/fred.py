@@ -7,3 +7,5 @@ Owner: TODO
 def fetch_fred(series, start, end):
     """Download FRED series and return a DataFrame indexed by date."""
     raise NotImplementedError
+
+
