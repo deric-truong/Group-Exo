@@ -1,15 +1,13 @@
-from pathlib import Path
 import pandas as pd
+from src import config
 
-#API upload
-url = "https://stats.bis.org/api/v2/data/dataflow/BIS/WS_GLI/1.0/Q.JPY.3P.N.A.I.B.JPY?format=csv"
-output_file = Path("data") / "bis_credit.parquet"   # changed: .csv -> .parquet
+OUTPUT_FILE = config.DIRECTORY / "bis_credit.parquet"
 
-def download_credit(url):
 
+def download_credit(url=config.BIS_CREDIT_URL, start=config.START, end=config.END):
     """Download BIS  data on yen-denominated credit to borrowers outside Japan"""
 
-    raw = pd.read_csv(url)   # the download itself is still a CSV, so this stays
+    raw = pd.read_csv(url)
 
     #filtering for just the data we need
     credit = raw[["TIME_PERIOD", "OBS_VALUE"]].copy() #had to make a copy to avoid error message
@@ -26,18 +24,20 @@ def download_credit(url):
     credit = credit.set_index("date").sort_index()
 
     #format credit column
-    credit["credit"] = credit["credit"]/1_000_000 #convert to trillions of yen
+    credit["credit"] = credit["credit"] / 1_000_000
+    credit = credit.loc[start:end]
 
     return credit
 
-def save_credit(credit, path):
 
-    """Save a table of credit to a Parquet file, creating the folder if needed."""   # changed: CSV -> Parquet
+def save_credit(credit, path=OUTPUT_FILE):
+    """Save a table of credit to a Parquet file, creating the folder if needed."""
 
-    path.parent.mkdir(exist_ok=True) #mkdir creates the folder, exist_ok=T prevents  error if it already exists
-    credit.to_parquet(path)   # changed: to_csv -> to_parquet
+    path.parent.mkdir(parents=True, exist_ok=True)
+    credit.to_parquet(path)
 
 if __name__ == "__main__":
-    credit = download_credit(url)
-    save_credit(credit, output_file)
+    credit = download_credit()
+    save_credit(credit)
+    print(f"Saved {len(credit)} rows to {OUTPUT_FILE}")
     print(credit.tail())

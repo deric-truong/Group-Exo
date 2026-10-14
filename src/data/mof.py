@@ -10,6 +10,8 @@ the day of the intervention, not the day the market learned about it.
 Owner: TODO
 """
 
+import io
+
 import pandas as pd
 import requests
 
@@ -19,8 +21,7 @@ URL = (
     "https://www.mof.go.jp/english/policy/international_policy/reference/"
     "feio/foreign_exchange_intervention_operations.csv"
 )
-RAW_FILE = config.RAW_DIR / "mof_interventions.csv"
-OUTPUT_FILE = config.PROCESSED_DIR / "mof_interventions.parquet"
+OUTPUT_FILE = config.DIRECTORY / "mof_interventions.parquet"
 
 
 def fetch_mof(start=config.START, end=config.END):
@@ -31,18 +32,14 @@ def fetch_mof(start=config.START, end=config.END):
                         > 0 = yen bought (to stop the yen falling)
                         < 0 = yen sold (to stop the yen rising)
 
-    The result is also saved to data/processed/mof_interventions.parquet.
+    The result is also saved to ``data/mof_interventions.parquet``.
     """
-    # Download once, then reuse the cached file
-    if not RAW_FILE.exists():
-        RAW_FILE.parent.mkdir(parents=True, exist_ok=True)
-        response = requests.get(URL, timeout=60)
-        response.raise_for_status()
-        RAW_FILE.write_bytes(response.content)
+    response = requests.get(URL, timeout=60)
+    response.raise_for_status()
 
     # Keep the English columns only (the first 3 are Japanese dates)
     df = pd.read_csv(
-        RAW_FILE,
+        io.BytesIO(response.content),
         encoding="cp932",  # Japanese Shift-JIS encoding
         header=None,
         usecols=[3, 4, 5, 6, 8],
@@ -68,6 +65,11 @@ def fetch_mof(start=config.START, end=config.END):
     # Some days had two operations (USD and EUR): add them up
     df = df.groupby("date")[["amount_bn_jpy"]].sum().loc[start:end]
 
-    config.PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(OUTPUT_FILE)
     return df
+
+
+if __name__ == "__main__":
+    interventions = fetch_mof()
+    print(f"Saved {len(interventions)} rows to {OUTPUT_FILE}")
