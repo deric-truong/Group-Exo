@@ -20,11 +20,30 @@ TODO
 
 ## Installation
 
+Create and activate a virtual environment from the repository root, then install
+the project's dependencies into it:
+
+macOS / Linux:
+
 ```bash
-pip install -r requirements.txt
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
-Then run `main.ipynb` from top to bottom. Data is downloaded automatically into `data/` (not versioned).
+Windows (PowerShell):
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+Run `main.ipynb` with the `.venv` environment selected as the notebook kernel.
+The same environment must be used when running Python scripts. Data is
+downloaded automatically into `data/` (not versioned).
 
 ## Repository structure
 
