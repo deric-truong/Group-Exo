@@ -11,11 +11,18 @@ END = date.today().isoformat()
 ROOT = Path(__file__).resolve().parents[1]
 DIRECTORY = ROOT / "data"
 
-# BIS yen-denominated credit series
+# BIS data url
 BIS_CREDIT_URL = (
     "https://stats.bis.org/api/v2/data/dataflow/BIS/WS_GLI/1.0/"
     "Q.JPY.3P.N.A.I.B.JPY?format=csv"
 )
+#MOF data url
+MOF_INTERVENTIONS_URL = (
+    "https://www.mof.go.jp/english/policy/international_policy/reference/"
+    "feio/foreign_exchange_intervention_operations.csv"
+)
+#CFTC data url
+CFTC_HISTORY_BASE_URL = "https://www.cftc.gov/files/dea/history/"
 
 # Yahoo Finance tickers
 YAHOO_TICKERS = {

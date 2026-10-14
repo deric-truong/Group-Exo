@@ -17,10 +17,6 @@ import requests
 
 from src import config
 
-URL = (
-    "https://www.mof.go.jp/english/policy/international_policy/reference/"
-    "feio/foreign_exchange_intervention_operations.csv"
-)
 OUTPUT_FILE = config.DIRECTORY / "mof_interventions.parquet"
 
 
@@ -34,7 +30,7 @@ def fetch_mof(start=config.START, end=config.END):
 
     The result is also saved to ``data/mof_interventions.parquet``.
     """
-    response = requests.get(URL, timeout=60)
+    response = requests.get(config.MOF_INTERVENTIONS_URL, timeout=60)
     response.raise_for_status()
 
     # Keep the English columns only (the first 3 are Japanese dates)
