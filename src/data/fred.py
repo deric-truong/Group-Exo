@@ -32,15 +32,15 @@ def fetch_fred(start, end, series_ids=None):
 
 if __name__ == "__main__":
     # Test dates covering the lead-up and aftermath of the August 2024 event
-    test_start = "2024-01-01"
+    test_start = "2000-01-01"
     test_end = pd.Timestamp.today().strftime("%Y-%m-%d")
 
     print("Fetching data from FRED...")
     df_test = fetch_fred(test_start, test_end)
-    
+
     output_file = Path("data/fred_rates.parquet")
     output_file.parent.mkdir(parents=True, exist_ok=True)
-    df_test.to_parquet(output_file)
+    df_test.to_parquet(output_file, index=True)
     print(f"Saved data to {output_file}")
 
     print("\n--- Last 5 Rows ---")

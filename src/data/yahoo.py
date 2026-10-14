@@ -6,7 +6,7 @@ import yfinance as yf
 #our own short names on the left, Yahoo Finance's ticker codes on the right
 tickers = {"usdjpy": "JPY=X", "nikkei": "^N225", "nasdaq": "^IXIC", "sp500": "^GSPC", "bitcoin": "BTC-USD", "usdmxn": "MXN=X", "gold": "GC=F", "brent": "BZ=F", "vix": "^VIX"}
 
-start_date = "2005-01-01"
+start_date = "2000-01-01"
 end_date = pd.Timestamp.today().strftime("%Y-%m-%d")
 output_file = Path("data") / "yahoo_prices.parquet"
 
