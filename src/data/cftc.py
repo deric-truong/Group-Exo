@@ -20,7 +20,6 @@ import requests
 
 from src import config
 
-BASE_URL = "https://www.cftc.gov/files/dea/history/"
 OUTPUT_FILE = config.DIRECTORY / "cftc_jpy.parquet"
 
 # Original CFTC column names -> short names used in the project
@@ -35,7 +34,7 @@ COLUMNS = {
 
 def _read_yen_rows(filename):
     """Download one CFTC zip in memory and return the yen rows."""
-    response = requests.get(BASE_URL + filename, timeout=120)
+    response = requests.get(config.CFTC_HISTORY_BASE_URL + filename, timeout=120)
     response.raise_for_status()
 
     with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
