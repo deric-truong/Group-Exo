@@ -12,14 +12,16 @@ observation is indexed by its release date to avoid look-ahead bias.
 Owner: TODO
 """
 
+import io
+import zipfile
+
 import pandas as pd
 import requests
 
 from src import config
 
 BASE_URL = "https://www.cftc.gov/files/dea/history/"
-RAW_CFTC_DIR = config.RAW_DIR / "cftc"
-OUTPUT_FILE = config.PROCESSED_DIR / "cftc_jpy.parquet"
+OUTPUT_FILE = config.DIRECTORY / "cftc_jpy.parquet"
 
 # Original CFTC column names -> short names used in the project
 COLUMNS = {
@@ -32,22 +34,20 @@ COLUMNS = {
 
 
 def _read_yen_rows(filename):
-    """Download one CFTC zip (once) and return the yen rows."""
-    path = RAW_CFTC_DIR / filename
-    if not path.exists():
-        RAW_CFTC_DIR.mkdir(parents=True, exist_ok=True)
-        response = requests.get(BASE_URL + filename, timeout=120)
-        response.raise_for_status()
-        path.write_bytes(response.content)
+    """Download one CFTC zip in memory and return the yen rows."""
+    response = requests.get(BASE_URL + filename, timeout=120)
+    response.raise_for_status()
 
-    # pandas reads the CSV straight from the zip
-    df = pd.read_csv(
-        path,
-        usecols=list(COLUMNS),
-        dtype={"CFTC Contract Market Code": str},  # keep the leading zero
-        skipinitialspace=True,  # numbers are left-padded with spaces
-        encoding="latin-1",
-    ).rename(columns=COLUMNS)
+    with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+        csv_name = next(name for name in archive.namelist() if not name.endswith("/"))
+        with archive.open(csv_name) as csv_file:
+            df = pd.read_csv(
+                csv_file,
+                usecols=list(COLUMNS),
+                dtype={"CFTC Contract Market Code": str},  # keep the leading zero
+                skipinitialspace=True,  # numbers are left-padded with spaces
+                encoding="latin-1",
+            ).rename(columns=COLUMNS)
 
     # Filter on the code, not the name: the market name changed over time
     return df[df["contract_code"].str.strip() == config.CFTC_JPY_CODE]
@@ -64,7 +64,7 @@ def fetch_cftc(start=config.START, end=config.END):
         spec_net         spec_long - spec_short (< 0 = net short yen)
         spec_net_pct_oi  spec_net / open_interest, comparable across years
 
-    The result is also saved to data/processed/cftc_jpy.parquet.
+    The result is also saved to data/cftc_jpy.parquet.
     """
     # 1986-2016 bundle (our window starts in 2000), then one file per year
     end_year = pd.Timestamp(end).year
@@ -86,6 +86,11 @@ def fetch_cftc(start=config.START, end=config.END):
     df["release_date"] = df["report_date"] + lag
     df = df.drop(columns="contract_code").set_index("release_date")
 
-    config.PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(OUTPUT_FILE)
     return df
+
+
+if __name__ == "__main__":
+    cftc = fetch_cftc()
+    print(f"Saved {len(cftc)} rows to {OUTPUT_FILE}")

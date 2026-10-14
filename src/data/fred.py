@@ -3,49 +3,29 @@
 Owner: TODO
 """
 
-from logging import config
+import pandas_datareader.data as web
 
-import pandas as pd
-import pandas_datareader.data as web #Pd-datareader is a Python lib, and the function 'DataReader' used to handle data retriever
-from pathlib import Path
+from src import config
 
-def fetch_fred(start, end, series_ids=None):
+OUTPUT_FILE = config.DIRECTORY / "fred_rates.parquet"
+
+
+def fetch_fred(start=config.START, end=config.END, series_ids=None):
     """Download FRED series and return a DataFrame indexed by date."""
 
     if series_ids is None:
-        # Default OECD Series IDs for US and Japan 3-month rates
-        series_ids ={
-            'US': 'IR3TIB01USM156N',
-            'Japan': 'IR3TIB01JPM156N'
-        }
+        series_ids = config.FRED_SERIES
 
-    # Fetch data automatically using pandas_datareader
-
-    df = web.DataReader(list(series_ids.values()),'fred',start,end)
-    
+    df = web.DataReader(list(series_ids.values()), "fred", start, end)
     # Rename columns to the readable country names
     df.columns = list(series_ids.keys())
 
     return df
 
-# --- Testing Block ---
 
 if __name__ == "__main__":
-    # Test dates covering the lead-up and aftermath of the August 2024 event
-    test_start = "2024-01-01"
-    test_end = pd.Timestamp.today().strftime("%Y-%m-%d")
-
     print("Fetching data from FRED...")
-    df_test = fetch_fred(test_start, test_end)
-    
-    output_file = Path("data/fred_rates.parquet")
-    output_file.parent.mkdir(parents=True, exist_ok=True)
-    df_test.to_parquet(output_file)
-    print(f"Saved data to {output_file}")
-
-    print("\n--- Last 5 Rows ---")
-    print(df_test.tail())
-
-    print("\n--- DataFrame Info ---")
-    print(df_test.info())
-
+    rates = fetch_fred()
+    OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
+    rates.to_parquet(OUTPUT_FILE)
+    print(f"Saved {len(rates)} rows to {OUTPUT_FILE}")

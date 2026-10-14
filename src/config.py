@@ -1,19 +1,33 @@
 """Shared project settings: analysis window, tickers, series IDs, paths."""
 
+from datetime import date
 from pathlib import Path
 
-# Fixed analysis window (do not change once agreed)
+# Analysis window
 START = "2000-01-01"
-END = "2025-12-31"
+END = date.today().isoformat()
 
 # Paths
 ROOT = Path(__file__).resolve().parents[1]
-RAW_DIR = ROOT / "data" / "raw"
-PROCESSED_DIR = ROOT / "data" / "processed"
+DIRECTORY = ROOT / "data"
+
+# BIS yen-denominated credit series
+BIS_CREDIT_URL = (
+    "https://stats.bis.org/api/v2/data/dataflow/BIS/WS_GLI/1.0/"
+    "Q.JPY.3P.N.A.I.B.JPY?format=csv"
+)
 
 # Yahoo Finance tickers
 YAHOO_TICKERS = {
     "usdjpy": "JPY=X",
+    "nikkei": "^N225",
+    "nasdaq": "^IXIC",
+    "sp500": "^GSPC",
+    "bitcoin": "BTC-USD",
+    "usdmxn": "MXN=X",
+    "gold": "GC=F",
+    "brent": "BZ=F",
+    "vix": "^VIX",
 }
 
 # FRED series (3-month interbank rates, monthly)

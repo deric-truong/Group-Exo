@@ -1,19 +1,17 @@
 
-from pathlib import Path
-import pandas as pd
 import yfinance as yf
 
-#our own short names on the left, Yahoo Finance's ticker codes on the right
-tickers = {"usdjpy": "JPY=X", "nikkei": "^N225", "nasdaq": "^IXIC", "sp500": "^GSPC", "bitcoin": "BTC-USD", "usdmxn": "MXN=X", "gold": "GC=F", "brent": "BZ=F", "vix": "^VIX"}
+from src import config
 
-start_date = "2005-01-01"
-end_date = pd.Timestamp.today().strftime("%Y-%m-%d")
-output_file = Path("data") / "yahoo_prices.parquet"
+OUTPUT_FILE = config.DIRECTORY / "yahoo_prices.parquet"
 
 
-def download_prices(tickers, start, end):
-
-    """Download daily prices of various related assets from Yahoo Finance"""   
+def download_prices(
+    tickers=config.YAHOO_TICKERS,
+    start=config.START,
+    end=config.END,
+):
+    """Download daily prices of related assets from Yahoo Finance."""
 
     raw = yf.download(list(tickers.values()), start=start, end=end, auto_adjust=True, progress=False, threads=False)
     closes = raw["Close"]  # keep only the closing prices
@@ -34,15 +32,15 @@ def download_prices(tickers, start, end):
 
     return closes
 
-def save_prices(prices, path):
-
+def save_prices(prices, path=OUTPUT_FILE):
     """Save a table of prices to a Parquet file, creating the folder if needed."""
 
-    path.parent.mkdir(exist_ok=True) #mkdir creates the folder, exist_ok=T prevents  error if it already exists
+    path.parent.mkdir(parents=True, exist_ok=True)
     prices.to_parquet(path)
 
 
 if __name__ == "__main__":
-    prices = download_prices(tickers, start_date, end_date)
-    save_prices(prices, output_file)
+    prices = download_prices()
+    save_prices(prices)
+    print(f"Saved {len(prices)} rows to {OUTPUT_FILE}")
     print(prices.tail())
