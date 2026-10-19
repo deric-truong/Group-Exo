@@ -9,3 +9,4 @@ seaborn
 pyarrow
 jupyter
 pandas-datareader
+pytest

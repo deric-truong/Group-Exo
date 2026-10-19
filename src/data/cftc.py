@@ -51,6 +51,11 @@ def _read_yen_rows(filename):
     # Filter on the code, not the name: the market name changed over time
     return df[df["contract_code"].str.strip() == config.CFTC_JPY_CODE]
 
+def save_cftc(df, path=OUTPUT_FILE):
+    """Save the CFTC table to a Parquet file, creating the folder if needed."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(path)
+
 
 def fetch_cftc(start=config.START, end=config.END):
     """Return weekly yen speculative positioning, indexed by release date.
@@ -62,8 +67,7 @@ def fetch_cftc(start=config.START, end=config.END):
         spec_short       non-commercial (speculative) short contracts
         spec_net         spec_long - spec_short (< 0 = net short yen)
         spec_net_pct_oi  spec_net / open_interest, comparable across years
-
-    The result is also saved to data/cftc_jpy.parquet.
+        delayed_release  True if publication was delayed by a shutdown
     """
     # 1986-2016 bundle (our window starts in 2000), then one file per year
     end_year = pd.Timestamp(end).year
@@ -80,16 +84,27 @@ def fetch_cftc(start=config.START, end=config.END):
     # Normalise by open interest so that 2007 and 2024 levels are comparable
     df["spec_net_pct_oi"] = df["spec_net"] / df["open_interest"]
 
-    # Tuesday data is released on Friday (+3 days)
-    lag = pd.Timedelta(days=config.CFTC_PUBLICATION_LAG_DAYS)
-    df["release_date"] = df["report_date"] + lag
-    df = df.drop(columns="contract_code").set_index("release_date")
+    # Positions are measured on Tuesday and released the following Friday.
+    # In holiday weeks the measurement day moves (Monday, Wednesday...),
+    # so we roll each report date forward to the next Friday instead of
+    # adding a fixed 3 days.
+    # Week(weekday=4) = "next Friday"; a date that is already a Friday
+    # goes to the Friday after it, which is the safe (later) choice.
+    df["release_date"] = df["report_date"] + pd.offsets.Week(weekday=4)
 
-    OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(OUTPUT_FILE)
+    # Flag reports whose publication was delayed by a government shutdown:
+    # the "next Friday" rule is wrong for them (see config.CFTC_DELAYED_WINDOWS)
+    df["delayed_release"] = False
+    for start_delay, end_delay in config.CFTC_DELAYED_WINDOWS:
+        in_window = df["report_date"].between(start_delay, end_delay)
+        df.loc[in_window, "delayed_release"] = True
+
+
+    df = df.drop(columns="contract_code").set_index("release_date")
     return df
 
 
 if __name__ == "__main__":
     cftc = fetch_cftc()
+    save_cftc(cftc) # saving now happens here, not inside fetch_cftc()
     print(f"Saved {len(cftc)} rows to {OUTPUT_FILE}")
