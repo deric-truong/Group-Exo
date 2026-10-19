@@ -5,7 +5,11 @@ OUTPUT_FILE = config.DIRECTORY / "bis_credit.parquet"
 
 
 def download_credit(url=config.BIS_CREDIT_URL, start=config.START, end=config.END):
-    """Download BIS  data on yen-denominated credit to borrowers outside Japan"""
+    """Download BIS  data on yen-denominated credit to borrowers outside Japan
+
+    Column:
+        credit   bank loans + debt securities, in trillions of yen
+    """
 
     raw = pd.read_csv(url)
 
@@ -24,6 +28,8 @@ def download_credit(url=config.BIS_CREDIT_URL, start=config.START, end=config.EN
     credit = credit.set_index("date").sort_index()
 
     #format credit column
+    #BIS reports in millions of yen (UNIT_MEASURE = JPY, UNIT_MULT = 6),
+    #so dividing by 1,000,000 gives trillions of yen (e.g. 2026-Q1 = 65.9 tn JPY)
     credit["credit"] = credit["credit"] / 1_000_000
     credit = credit.loc[start:end]
 
