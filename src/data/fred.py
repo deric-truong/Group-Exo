@@ -3,6 +3,8 @@
 Owner: TODO
 """
 
+from pathlib import Path
+
 import pandas_datareader.data as web
 """Pd-datareader is a Python lib, and the function 'DataReader' used to handle data retriever"""
 
@@ -41,4 +43,11 @@ if __name__ == "__main__":
 
     print("\n--- DataFrame Info ---")
     print(df_test.info())
+
+    # Write a CSV for quick visual inspection only (not consumed by the pipeline).
+    # /data/ is gitignored, so this file is never committed.
+    preview_path = Path(__file__).resolve().parents[2] / "data" / "fred_preview.csv"
+    preview_path.parent.mkdir(parents=True, exist_ok=True)
+    df_test.to_csv(preview_path, index_label="Date")
+    print(f"\nPreview CSV written to {preview_path}")
 
