@@ -62,6 +62,19 @@ python -m src.data.mof     # MoF interventions
 
 Each command saves its output to `data/` and prints the row count.
 
+## Testing
+
+Tests check the saved files in `data/`, so fetch the data first.
+A test file is skipped (not failed) if its data has not been downloaded.
+
+```bash
+python -m pytest -v                      # run all tests
+python -m pytest tests/test_cftc.py -v   # run one source only
+```
+
+After pulling changes to a module in `src/data/`, re-run its fetch command
+before testing, otherwise the tests check the old file.
+
 ## Repository structure
 
 ```
@@ -69,6 +82,7 @@ main.ipynb       final notebook
 src/config.py    analysis window, tickers, series IDs
 src/data/        one retrieval module per source
 src/             cleaning and analysis modules
+tests/           checks on the downloaded data (pytest)
 notebooks/       individual exploration notebooks
 docs/            data cleaning decisions log
 ```

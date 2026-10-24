@@ -45,4 +45,12 @@ FRED_SERIES = {
 
 # CFTC: Japanese yen futures contract code
 CFTC_JPY_CODE = "097741"
-CFTC_PUBLICATION_LAG_DAYS = 3
+
+# CFTC: US government shutdowns delayed the Commitments of Traders reports.
+# Reports measured in these windows were published weeks late, so their
+# release dates are unreliable. Dates are report (Tuesday) dates.
+# TODO: check the exact windows on cftc.gov before relying on them
+CFTC_DELAYED_WINDOWS = [
+    ("2013-10-01", "2013-10-15"),  # October 2013 shutdown
+    ("2018-12-25", "2019-01-29"),  # Dec 2018 - Jan 2019 shutdown
+]
