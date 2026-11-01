@@ -17,7 +17,7 @@ TODO
 | Yahoo Finance | FX, equities, Bitcoin, commodities | `src/data/yahoo.py` | TODO |
 | FRED | US/Japan 3-month rates | `src/data/fred.py` | TODO |
 | CFTC | Yen futures positioning | `src/data/cftc.py` | TODO |
-| BIS | Credit data | `src/data/bis.py` | TODO |
+| BIS | Yen credit to borrowers outside Japan (quarterly, tn JPY) | `src/data/bis.py` | TODO |
 | MoF Japan | FX interventions | `src/data/mof.py` | TODO |
 
 ## Installation
@@ -69,7 +69,8 @@ A test file is skipped (not failed) if its data has not been downloaded.
 
 ```bash
 python -m pytest -v                      # run all tests
-python -m pytest tests/test_cftc.py -v   # run one source only
+python -m pytest tests/test_cftc.py -v   # run one source only (or tests/test_bis.py)
+python -m pytest -v tests/test_bis.py -v
 ```
 
 After pulling changes to a module in `src/data/`, re-run its fetch command
@@ -89,7 +90,11 @@ docs/            data cleaning decisions log
 
 ## Limitations
 
-TODO
+- BIS credit is quarterly and published with a lag. Its `release_date` assumes
+  4 months after quarter end, an approximation still to be checked against the
+  BIS release calendar. Past quarters are also revised, so re-fetch before
+  final results.
+- TODO
 
 ## Team
 

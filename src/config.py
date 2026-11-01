@@ -16,6 +16,9 @@ BIS_CREDIT_URL = (
     "https://stats.bis.org/api/v2/data/dataflow/BIS/WS_GLI/1.0/"
     "Q.JPY.3P.N.A.I.B.JPY?format=csv"
 )
+# BIS: publication lag of the global liquidity indicators, in months after quarter end
+# TODO: check the exact release calendar on bis.org before relying on it
+BIS_RELEASE_LAG_MONTHS = 4
 #MOF data url
 MOF_INTERVENTIONS_URL = (
     "https://www.mof.go.jp/english/policy/international_policy/reference/"
