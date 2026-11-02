@@ -69,7 +69,7 @@ A test file is skipped (not failed) if its data has not been downloaded.
 
 ```bash
 python -m pytest -v                      # run all tests
-python -m pytest tests/test_cftc.py -v   # run one source only (or test_bis.py, test_yahoo.py)
+python -m pytest tests/test_cftc.py -v   # run one source only (or test_bis.py, test_yahoo.py, test_mof.py)
 python -m pytest -v tests/test_bis.py -v
 ```
 
@@ -94,6 +94,11 @@ docs/            data cleaning decisions log
   4 months after quarter end, an approximation still to be checked against the
   BIS release calendar. Past quarters are also revised, so re-fetch before
   final results.
+- MoF interventions are indexed by the day they happened, but daily details are
+  only published with the quarterly report. `release_date` assumes quarter end
+  + 45 days, on or after every release checked (e.g. Q3 2024 out on 8 Nov 2024).
+  MoF also publishes a monthly total (no daily split) around month end, which
+  reveals an intervention earlier; this is not used here.
 - Yahoo prices are closes in different time zones: the Nikkei closes about
   15 hours before US markets, so the same date is not the same moment.
 - Gold (`GC=F`) and Brent (`BZ=F`) are continuous futures; prices can jump
