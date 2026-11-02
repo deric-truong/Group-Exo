@@ -24,6 +24,9 @@ MOF_INTERVENTIONS_URL = (
     "https://www.mof.go.jp/english/policy/international_policy/reference/"
     "feio/foreign_exchange_intervention_operations.csv"
 )
+# MoF: daily details are published once per quarter, about 5-6 weeks after quarter end
+# (e.g. Q1 2024 on 9 May, Q2 on 7 Aug, Q3 on 8 Nov 2024, Q4 on 7 Feb 2025); 45 days is on or after every release seen
+MOF_RELEASE_LAG_DAYS = 45
 #CFTC data url
 CFTC_HISTORY_BASE_URL = "https://www.cftc.gov/files/dea/history/"
 
