@@ -69,7 +69,7 @@ A test file is skipped (not failed) if its data has not been downloaded.
 
 ```bash
 python -m pytest -v                      # run all tests
-python -m pytest tests/test_cftc.py -v   # run one source only (or tests/test_bis.py)
+python -m pytest tests/test_cftc.py -v   # run one source only (or test_bis.py, test_yahoo.py)
 python -m pytest -v tests/test_bis.py -v
 ```
 
@@ -94,6 +94,10 @@ docs/            data cleaning decisions log
   4 months after quarter end, an approximation still to be checked against the
   BIS release calendar. Past quarters are also revised, so re-fetch before
   final results.
+- Yahoo prices are closes in different time zones: the Nikkei closes about
+  15 hours before US markets, so the same date is not the same moment.
+- Gold (`GC=F`) and Brent (`BZ=F`) are continuous futures; prices can jump
+  when one contract rolls into the next.
 - TODO
 
 ## Team

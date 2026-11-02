@@ -40,6 +40,10 @@ YAHOO_TICKERS = {
     "vix": "^VIX",
 }
 
+# Yahoo: series cleaned of one-day bad prints (see remove_spikes in yahoo.py).
+# Only FX: for equities, VIX, Bitcoin and oil, big moves that reverse the next day are real
+YAHOO_SPIKE_CHECK = ["usdjpy"]
+
 # FRED series (3-month interbank rates, monthly)
 FRED_SERIES = {
     "us_3m": "IR3TIB01USM156N",
