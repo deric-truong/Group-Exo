@@ -6,8 +6,9 @@ The CFTC publishes one zip covering 1986-2016, then one zip per year.
 Each zip holds a CSV with every futures market; we keep the Japanese yen
 contract only (CME, contract code 097741).
 
-Positions are measured on Tuesday and published on Friday, so each
-observation is indexed by its release date to avoid look-ahead bias.
+Positions are measured on Tuesday and published on Friday. Like the other
+sources, each observation is indexed by its measurement date, with the
+publication day in ``release_date`` to avoid look-ahead bias.
 
 Owner: TODO
 """
@@ -58,15 +59,17 @@ def save_cftc(df, path=OUTPUT_FILE):
 
 
 def fetch_cftc(start=config.START, end=config.END):
-    """Return weekly yen speculative positioning, indexed by release date.
+    """Return weekly yen speculative positioning, indexed by report date.
+
+    Index: report_date, the Tuesday the positions were measured
 
     Columns:
-        report_date      Tuesday the positions were measured
         open_interest    total open contracts
         spec_long        non-commercial (speculative) long contracts
         spec_short       non-commercial (speculative) short contracts
         spec_net         spec_long - spec_short (< 0 = net short yen)
         spec_net_pct_oi  spec_net / open_interest, comparable across years
+        release_date     Friday the report was published (no look-ahead)
         delayed_release  True if publication was delayed by a shutdown
     """
     # 1986-2016 bundle (our window starts in 2000), then one file per year
@@ -100,7 +103,7 @@ def fetch_cftc(start=config.START, end=config.END):
         df.loc[in_window, "delayed_release"] = True
 
 
-    df = df.drop(columns="contract_code").set_index("release_date")
+    df = df.drop(columns="contract_code").set_index("report_date")
     return df
 
 

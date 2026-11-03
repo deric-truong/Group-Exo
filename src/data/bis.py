@@ -53,8 +53,6 @@ def download_credit(url=config.BIS_CREDIT_URL, start=config.START, end=config.EN
     #so the value is only usable from release_date on
     credit["release_date"] = credit.index + pd.DateOffset(months=config.BIS_RELEASE_LAG_MONTHS)
 
-    credit = credit.set_index("release_date").sort_index()
-
     return credit
 
 

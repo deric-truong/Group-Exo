@@ -100,21 +100,48 @@ notebooks/       individual exploration notebooks
 docs/            data cleaning decisions log
 ```
 
+## Date conventions
+
+Every source is indexed by the date its value refers to, with the day it became
+public in a `release_date` column:
+
+| Source | Index | `release_date` |
+|--------|-------|----------------|
+| Yahoo | trading day | — (known on the day) |
+| FRED | month start | month start + 3 months |
+| CFTC | report date (Tuesday) | next Friday |
+| BIS | quarter end | quarter end + 4 months |
+| MoF | intervention day | quarter end + 45 days |
+
+Which date to align on depends on the test:
+
+- **Event study** → the index (event date). Markets react the same day: the
+  11–12 July 2024 interventions moved USD/JPY at once, while their
+  `release_date` is 14 Nov 2024.
+- **Forward-return / predictive tests (H2, H3)** → `release_date`, so that only
+  data public at the time is used.
+
+The download window is fixed in `src/config.py` (`START = 2000-01-01`,
+`END = 2026-09-30`) so results do not change between runs. Tests that need the
+US–JP rate differential start at `ANALYSIS_START = 2002-04-01` (first jp_3m value).
+
 ## Limitations
 
 - BIS credit is quarterly and published with a lag. Its `release_date` assumes
-  4 months after quarter end, an approximation still to be checked against the
-  BIS release calendar. Past quarters are also revised, so re-fetch before
+  4 months after quarter end (checked: 2026-Q2 came out on 29 Oct 2026). Past quarters are also revised, so re-fetch before
   final results.
 - MoF interventions are indexed by the day they happened, but daily details are
   only published with the quarterly report. `release_date` assumes quarter end
   + 45 days, on or after every release checked (e.g. Q3 2024 out on 8 Nov 2024).
   MoF also publishes a monthly total (no daily split) around month end, which
   reveals an intervention earlier; this is not used here.
-- FRED rates are monthly averages. `release_date` assumes 3 months after the
-  month start, an approximation still to be checked against the OECD release
-  timing. `jp_3m` starts only in 2002-04 and switches from 3 to 5 decimals in
-  2025-01 (possible change of source rate, not yet checked).
+- FRED rates are monthly averages (except `jp_3m` from 2025-01, see below). `release_date` assumes 3 months after the
+  month start; the October 2026 update had US data about 1.5 months and JP
+  about 2.5 months after the month start, so this is on the safe side (past
+  release dates not checked). `jp_3m` starts only in 2002-04 and changes
+  underlying rate in 2025-01. From then on it equals the month-end 3-month JBA
+  Japanese Yen TIBOR (a month-end value, not an average); in 2024 it was 6–23bp
+  below that rate. Results are checked without the Dec 2024 → Jan 2025 change.
 - Yahoo prices are closes in different time zones: the Nikkei closes about
   15 hours before US markets, so the same date is not the same moment.
 - Gold (`GC=F`) and Brent (`BZ=F`) are continuous futures; prices can jump
