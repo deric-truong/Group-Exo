@@ -4,9 +4,6 @@ from datetime import date
 from pathlib import Path
 
 # Analysis window
-# TODO: check if the data and start/end dates differ across data sources (FRED, Yahoo, BIS,
-# CFTC, MOF) - e.g. FRED jp_3m only starts 2002-04 and lags us_3m by a month at the end.
-# Need to agree within the group on a common window
 START = "2000-01-01"
 END = date.today().isoformat()
 
@@ -55,10 +52,6 @@ FRED_SERIES = {
     "us_3m": "IR3TIB01USM156N",
     "jp_3m": "IR3TIB01JPM156N",
 }
-# FRED: months after the month start before the monthly average is public
-# (US arrives about 1 month after month end, JP about 2)
-# TODO: check the exact OECD release timing before relying on it
-FRED_RELEASE_LAG_MONTHS = 3
 
 # CFTC: Japanese yen futures contract code
 CFTC_JPY_CODE = "097741"
