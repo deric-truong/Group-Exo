@@ -47,7 +47,7 @@ def download_credit(url=config.BIS_CREDIT_URL, start=config.START, end=config.EN
     #BIS reports in millions of yen (UNIT_MEASURE = JPY, UNIT_MULT = 6),
     #so dividing by 1,000,000 gives trillions of yen (e.g. 2026-Q1 = 65.9 tn JPY)
     credit["credit"] = credit["credit"] / 1_000_000
-    credit = credit.loc[start:end]
+    credit = credit.set_index("date").sort_index().loc[start:end]
 
     #BIS publishes each quarter with a lag of about 4 months,
     #so the value is only usable from release_date on

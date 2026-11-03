@@ -32,6 +32,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
+python -m pip install -e .
 ```
 
 Windows (PowerShell):
@@ -41,6 +42,7 @@ py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
+python -m pip install -e .
 ```
 
 Run `main.ipynb` with the `.venv` environment selected as the notebook kernel.
@@ -49,8 +51,18 @@ downloaded automatically into `data/` (not versioned).
 
 ## Fetching data
 
-Each source can be downloaded on its own from the repository root (use `-m`,
-not the file path, so `src` imports resolve):
+With the editable install above, each source can be run directly from its file
+path, from the repository root:
+
+```bash
+python src/data/yahoo.py   # FX, equities, BTC, commodities
+python src/data/fred.py    # US/Japan 3-month rates
+python src/data/cftc.py    # yen futures positioning
+python src/data/bis.py     # BIS credit data
+python src/data/mof.py     # MoF interventions
+```
+
+Alternatively, run them as modules from the repository root:
 
 ```bash
 python -m src.data.yahoo   # FX, equities, BTC, commodities
