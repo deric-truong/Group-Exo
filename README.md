@@ -15,7 +15,7 @@ TODO
 | Source | Data | Module | Owner |
 |--------|------|--------|-------|
 | Yahoo Finance | FX, equities, Bitcoin, commodities | `src/data/yahoo.py` | TODO |
-| FRED | US/Japan 3-month interbank rates (monthly, %) | `src/data/fred.py` | TODO |
+| FRED | US/Japan 3-month rates | `src/data/fred.py` | TODO |
 | CFTC | Yen futures positioning | `src/data/cftc.py` | TODO |
 | BIS | Yen credit to borrowers outside Japan (quarterly, tn JPY) | `src/data/bis.py` | TODO |
 | MoF Japan | FX interventions | `src/data/mof.py` | TODO |
@@ -81,7 +81,7 @@ A test file is skipped (not failed) if its data has not been downloaded.
 
 ```bash
 python -m pytest -v                      # run all tests
-python -m pytest tests/test_cftc.py -v   # run one source only (or test_bis.py, test_yahoo.py, test_mof.py, test_fred.py)
+python -m pytest tests/test_cftc.py -v   # run one source only (or test_bis.py, test_yahoo.py, test_mof.py)
 python -m pytest -v tests/test_bis.py -v
 ```
 
@@ -111,10 +111,6 @@ docs/            data cleaning decisions log
   + 45 days, on or after every release checked (e.g. Q3 2024 out on 8 Nov 2024).
   MoF also publishes a monthly total (no daily split) around month end, which
   reveals an intervention earlier; this is not used here.
-- FRED rates are monthly averages. `release_date` assumes 3 months after the
-  month start, an approximation still to be checked against the OECD release
-  timing. `jp_3m` starts only in 2002-04 and switches from 3 to 5 decimals in
-  2025-01 (possible change of source rate, not yet checked).
 - Yahoo prices are closes in different time zones: the Nikkei closes about
   15 hours before US markets, so the same date is not the same moment.
 - Gold (`GC=F`) and Brent (`BZ=F`) are continuous futures; prices can jump
