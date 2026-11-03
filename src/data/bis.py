@@ -42,7 +42,6 @@ def download_credit(url=config.BIS_CREDIT_URL, start=config.START, end=config.EN
     #create new dataframe with the format we want
     credit = credit.rename(columns={"OBS_VALUE": "credit", "TIME_PERIOD": "date"})
     credit = credit[["date", "credit"]]
-    credit = credit.set_index("date").sort_index()
 
     #format credit column
     #BIS reports in millions of yen (UNIT_MEASURE = JPY, UNIT_MULT = 6),
@@ -53,6 +52,8 @@ def download_credit(url=config.BIS_CREDIT_URL, start=config.START, end=config.EN
     #BIS publishes each quarter with a lag of about 4 months,
     #so the value is only usable from release_date on
     credit["release_date"] = credit.index + pd.DateOffset(months=config.BIS_RELEASE_LAG_MONTHS)
+
+    credit = credit.set_index("release_date").sort_index()
 
     return credit
 
