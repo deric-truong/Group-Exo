@@ -3,6 +3,7 @@
 import pandas as pd
 import pytest
 
+from src import config
 from src.data.fred import OUTPUT_FILE
 
 # The data/ folder is not in git: skip (not fail) if the file was never fetched
@@ -47,3 +48,10 @@ def test_no_extreme_jumps():
     # A month-on-month move above 2 percentage points would point to a data error
     # (largest real move: US -1.65 in 2008-11)
     assert (df[["us_3m", "jp_3m"]].diff().abs().stack().dropna() < 2).all()
+
+
+def test_jp_3m_break_is_where_config_says():
+    # jp_3m very likely changes underlying rate in 2025-01 (see config.JP_3M_BREAK);
+    # if this fails, FRED revised the series and the break must be checked again
+    jump = df["jp_3m"].diff().loc[config.JP_3M_BREAK]
+    assert jump > 0.3

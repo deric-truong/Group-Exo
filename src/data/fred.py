@@ -14,10 +14,12 @@ OUTPUT_FILE = config.DIRECTORY / "fred_rates.parquet"
 def fetch_fred(start=config.START, end=config.END, series_ids=None):
     """Download FRED series and return a DataFrame indexed by date.
 
-    Index: first day of the month (each value is the monthly average)
+    Index: first day of the month
 
     Columns:
-        us_3m, jp_3m   3-month interbank rates, in percent (NaN where FRED has no value)
+        us_3m, jp_3m   3-month interbank rates, in percent (NaN where FRED has no value);
+                       monthly averages, except jp_3m from 2025-01, which is the
+                       month-end JBA TIBOR (see config.JP_3M_BREAK)
         release_date   approximate date the month became public (no look-ahead)
     """
 
@@ -51,7 +53,7 @@ def fetch_fred(start=config.START, end=config.END, series_ids=None):
     #gaps (jp_3m before 2002-04, us_3m 2020-04, the latest month for jp_3m) are kept as NaN:
     #filling them would invent values, alignment is done in the merge step
 
-    #each value is a monthly average published after the month ends,
+    #each value refers to the whole month (average or month-end) and is published after it ends,
     #so it is only usable from release_date on
     df["release_date"] = df.index + pd.DateOffset(months=config.FRED_RELEASE_LAG_MONTHS)
 
