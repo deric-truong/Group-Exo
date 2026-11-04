@@ -74,6 +74,26 @@ python -m src.data.mof     # MoF interventions
 
 Each command saves its output to `data/` and prints the row count.
 
+## Cleaning and merging
+
+Once every source is fetched, build the merged daily table from the repository root:
+
+```bash
+python -m src.cleaning   # saves data/processed/merged_daily.parquet
+```
+
+One row per USD/JPY trading day, from `START` to `END`:
+
+| Columns | Meaning | Use for |
+|---------|---------|---------|
+| `usdjpy` … `vix` | Yahoo closes, NaN when that market was closed (not filled) | returns |
+| `us_3m`, `jp_3m`, `rate_diff` | rate of the day's month | carry accrual, event study |
+| `*_known` (rates, CFTC, BIS `credit_known`) | latest value public on that day, used from the trading day after `release_date` | predictive tests (H2, H3) |
+| `intervention_bn_jpy` | MoF intervention on that day (> 0 = yen bought), 0 if none | event study |
+
+CFTC reports delayed by a shutdown are left out of the `_known` columns; the
+last on-time report is carried forward instead.
+
 ## Testing
 
 Tests check the saved files in `data/`, so fetch the data first.
@@ -81,7 +101,7 @@ A test file is skipped (not failed) if its data has not been downloaded.
 
 ```bash
 python -m pytest -v                      # run all tests
-python -m pytest tests/test_cftc.py -v   # run one source only (or test_bis.py, test_yahoo.py, test_mof.py, test_fred.py)
+python -m pytest tests/test_cftc.py -v   # run one source only (or test_bis.py, test_yahoo.py, test_mof.py, test_fred.py, test_cleaning.py)
 python -m pytest -v tests/test_bis.py -v
 ```
 
