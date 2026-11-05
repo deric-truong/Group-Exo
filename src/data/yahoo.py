@@ -1,4 +1,5 @@
 
+import pandas as pd
 import yfinance as yf
 
 from src import config
@@ -13,6 +14,8 @@ def download_prices(
 ):
     """Download daily prices of related assets from Yahoo Finance."""
 
+    #yfinance excludes the end day, so ask for one day more to keep END itself
+    end = pd.Timestamp(end) + pd.Timedelta(days=1)
     raw = yf.download(list(tickers.values()), start=start, end=end, auto_adjust=True, progress=False, threads=False)
     closes = raw["Close"]  # keep only the closing prices
 
@@ -29,6 +32,7 @@ def download_prices(
 
     closes = closes[list(tickers)]  #put in same column order as tickers
     closes.index.name = "date"
+    closes.columns.name = None
 
     for name in config.YAHOO_SPIKE_CHECK:
         if name in closes.columns:
