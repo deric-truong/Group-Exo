@@ -17,7 +17,7 @@ import pandas as pd
 from src import config
 from src.data import bis, cftc, fred, mof, yahoo
 
-OUTPUT_FILE = config.DIRECTORY / "processed" / "merged_daily.parquet"
+OUTPUT_FILE = config.DIRECTORY / "merged_daily.parquet"
 
 RATE_COLUMNS = ["us_3m", "jp_3m"]
 CFTC_COLUMNS = ["spec_net", "spec_net_pct_oi", "open_interest"]

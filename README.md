@@ -79,7 +79,7 @@ Each command saves its output to `data/` and prints the row count.
 Once every source is fetched, build the merged daily table from the repository root:
 
 ```bash
-python -m src.cleaning   # saves data/processed/merged_daily.parquet
+python -m src.cleaning   # saves data/merged_daily.parquet
 ```
 
 One row per USD/JPY trading day, from `START` to `END`:
