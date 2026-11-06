@@ -84,6 +84,7 @@ table["yen_sell_amt"] = sell.reindex(table.index).fillna(0)
 #write final table to parquet
 table.to_parquet(config.DIRECTORY / "modelling_table.parquet", index=True)
 
+#decide later whether to keep
 #T/F: was there an intervention in the 1 week/4 weeks the target looks over? (not features for the model, but useful for analysis & checking robustness of results (PHASE 5))
 def intervention_ahead(amount, weeks):
     """ True if there is an intervention in any of the next `weeks` weeks """

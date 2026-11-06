@@ -31,3 +31,24 @@
 | 2026-11-04 | Merge | Leave CFTC reports delayed by a shutdown out of the `_known` columns | Their real release date is unknown; carrying the last on-time report forward cannot use data before it was public | Deric |
 | 2026-11-04 | Merge | MoF: 0 on days without intervention; stop with an error if an intervention falls on a day without a USD/JPY close | No intervention may be lost in the merge. Days after the last published quarter (from 2026-07-01) also show 0, although MoF has not reported them yet | Deric |
 | 2026-11-04 | Yahoo | Ask yfinance for `END` + 1 day | yfinance excludes the end day, so 2026-09-30 was missing | Deric |
+| 2026-11-06 | Sampling | 
+
+# Modelling table decisions log
+
+| Date | Source | Decision | Reason | Author |
+|------|--------|----------|--------|--------|
+
+| 2026-11-06 | Modelling table | Weekly sampling on Friday close (`resample("W-FRI").last()`); on a holiday Friday the last available day of that week is used | CFTC positioning is weekly; daily rows of a 4-week target overlap by 95% and add no independent information. Daily data is still used to build features such as volatility | Adam |
+| 2026-11-06 | Modelling table | Carry return for long USD / short JPY: ln(S(t+h)/S(t)) + (US rate - JP rate)/100 x days/365 | Spot move plus interest earned | Adam |
+| 2026-11-06 | Modelling table | Horizons: 4 weeks (main, 28/365) and 1 week (robustness, 7/365) | A month is long enough for an unwind to show and short enough to keep many observations | Adam |
+| 2026-11-06 | Yahoo | Realised volatility: std of the last 20 daily log returns of USD/JPY x sqrt(252), computed on daily data before going weekly | Convention (about one trading month); to be re-run with 10 and 60 days | Adam |
+| 2026-11-06 | Modelling table | Slow series are merged with `merge_asof(direction="backward")` on their release date | Each Friday only sees values already published, which avoids look-ahead | Adam |
+| 2026-11-06 | FRED | US 3-month rate used from the 1st of the following month | Monthly average, only complete at month end; FRED posts it within days | Adam |
+| 2026-11-06 | FRED | Japan 3-month rate (OECD) used 2 months after the month it is dated | FRED showed a delay of roughly 2 to 6 weeks; 2 months is on the safe side. Robustness: re-run with 1 and 3 months | Adam |
+| 2026-11-06 | FRED | Usable sample starts around mid-2002 | The Japan series begins in April 2002 (plus the lag), so `rate_diff` and both targets are empty before | Adam |
+| 2026-11-06 | CFTC | `date` is the publication date (Friday), `report_date` is the Tuesday the positions describe. Used from `date`; a Friday release is used for that same Friday | CFTC publishes at 3:30pm New York, before the 5pm FX close | Adam |
+| 2026-11-06 | BIS | 4-quarter credit growth computed on the quarterly table, then used 4 months after quarter end (`BIS_RELEASE_LAG_MONTHS`) | The lag is an approximation, still to be checked against the BIS release calendar | Adam |
+| 2026-11-06 | CFTC | Positioning z-score: rolling 156 weeks, at least 52 weeks required, past data only | Measures how extreme positioning is relative to recent history without look-ahead; the first year is empty | Adam |
+| 2026-11-06 | MoF | Positive amounts = yen-buying, negative = yen-selling (checked on 29 April 2024); amounts in billion yen, summed per Monday-Friday week, stored as two columns | Yen-buying hurts a carry trade, yen-selling does not | Adam |
+| 2026-11-06 | MoF | Intervention True/False flags are not stored in the table; built in the robustness phase with `intervention_ahead()` | They use the future, so they must never be model features. Daily detail is published about five weeks after each quarter | Adam |
+| 2026-11-06 | Modelling table | Empty values (warm-up windows, last 4 weeks, a few missing prices) are left in the table and dropped at modelling time | Keeps the table complete and the choice visible | Adam |
