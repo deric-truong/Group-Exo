@@ -1,94 +1,111 @@
-""" Group features extracted from raw data in a table to be used in modelling, and engineer new features of interest"""
+"""Build weekly features and forward-carry targets for modelling."""
 
-
-import pandas as pd
-from src import config
 import numpy as np
+import pandas as pd
+
+from src import config
 
 
-#load yahoo data
-prices = pd.read_parquet(config.DIRECTORY / "yahoo_prices.parquet")
-usdjpy = prices["usdjpy"].dropna()
-vix = prices["vix"].dropna()
-#realised volatility - rolling 20-day (convention) standard deviation of daily log returns, annualized
-realised_vol = np.log(usdjpy).diff().rolling(20).std() * np.sqrt(252)
-
-#start constructing table
-daily = pd.DataFrame({"usdjpy": usdjpy, "rv_20d": realised_vol, "vix": vix})
-#take weekly closing data - positioning is weekly so NA 4/5 days, fewer overlapping data, etc.
-table = daily.resample("W-FRI").last()
-
-
-#load rate data
-rates = pd.read_parquet(config.DIRECTORY / "fred_rates.parquet")
-#add rates to table - we need to align monthly FRED release schedules with the weekly data
-def attach_monthly (table, series, release_offset):
-    """ function allows flexibility in aligning data with different release schedules and standards"""
-
+def attach_monthly(table, series, release_offset):
+    """Align a slow-moving series with weekly rows using its release date."""
     monthly = pd.DataFrame(series).dropna(how="all")
     monthly["release_date"] = monthly.index + release_offset
+    monthly["release_date"] = monthly["release_date"].astype(table.index.dtype)
 
-    merged = pd.merge_asof(table, monthly, left_index=True, right_on="release_date", direction="backward")
-
+    merged = pd.merge_asof(
+        table,
+        monthly,
+        left_index=True,
+        right_on="release_date",
+        direction="backward",
+    )
     return merged.drop(columns=["release_date"])
-#US rate is a monthly average released at month-end, so we use the first day of the next month to avoid look-ahead bias
-table = attach_monthly(table, rates["us_3m"], pd.offsets.MonthBegin(1))
-#FRED website shows a delay of 2-6 weeks for the JP rate, so we use 2 months to avoid look-ahead bias
-table = attach_monthly(table, rates["jp_3m"], pd.offsets.DateOffset(months=2)) 
-#formatting
-table = table.rename(columns={"us_3m": "us_rate", "jp_3m": "jp_rate"})
-
-#calculate rate differential
-table["rate_diff"] = table["us_rate"] - table["jp_rate"]
-
-#calculate carry-to-volatility ratio (carry trade return per unit of risk)
-table["carry_to_vol"] = table["rate_diff"] / 100 / table["rv_20d"]
-
-#add VIX change over past 4 weeks
-table["vix_chg_4w"] = table["vix"].diff(4)
-
-#calculate carry trade return for different time horizons (target variables)
-table["fwd_carry_4w"] = np.log(table["usdjpy"].shift(-4)/table["usdjpy"]) + table["rate_diff"] /100 * 28/365
-table["fwd_carry_1w"] = np.log(table["usdjpy"].shift(-1)/table["usdjpy"]) + table["rate_diff"] / 100 * 7/365
 
 
-#load positioning data 
-cftc = pd.read_parquet(config.DIRECTORY / "cftc_jpy.parquet")
-#divide net positioning by open interest for comparability
-pos = pd.DataFrame({"spec_net_pct_oi": cftc["spec_net"] / cftc["open_interest"]})
-#calculate z-score with 3 year window (measure of how extreme the positioning is relative to its history)
-pos["spec_net_z"] = (pos["spec_net_pct_oi"] - pos["spec_net_pct_oi"].rolling(156, min_periods=52).mean()) / pos["spec_net_pct_oi"].rolling(156, min_periods=52).std()
-
-#add positioning data to table
-table = attach_monthly(table, pos, pd.Timedelta(days=0)) 
+def weekly_closes(daily):
+    """Sample Friday closes and discard a trailing, incomplete Friday bin."""
+    weekly = daily.resample("W-FRI").last()
+    if not weekly.empty and weekly.index[-1] > daily.index[-1]:
+        weekly = weekly.iloc[:-1]
+    return weekly
 
 
-#load credit data
-bis = pd.read_parquet(config.DIRECTORY / "bis_credit.parquet")
-#yearly growth
-credit_yoy = bis["credit"].pct_change(4).rename("credit_yoy")
+def positioning_features(cftc):
+    """Return on-time CFTC features indexed by publication date."""
+    on_time = cftc.loc[~cftc["delayed_release"]]
+    pos = pd.DataFrame(
+        {
+            "spec_net_pct_oi": (
+                on_time["spec_net"].to_numpy() / on_time["open_interest"].to_numpy()
+            )
+        },
+        index=pd.DatetimeIndex(on_time["release_date"]),
+    ).sort_index()
+    pos.index.name = None
+    pos["spec_net_z"] = (
+        pos["spec_net_pct_oi"] - pos["spec_net_pct_oi"].rolling(156, min_periods=52).mean()
+    ) / pos["spec_net_pct_oi"].rolling(156, min_periods=52).std()
+    return pos
 
-#add credit data to table
-table = attach_monthly(table, credit_yoy, pd.DateOffset(months=config.BIS_RELEASE_LAG_MONTHS))
+
+def build_modelling_table():
+    """Load source files and return the weekly modelling table."""
+    # Load Yahoo data
+    prices = pd.read_parquet(config.DIRECTORY / "yahoo_prices.parquet")
+    usdjpy = prices["usdjpy"].dropna()
+    vix = prices["vix"].dropna()
+
+    # Calculate realised volatility from daily log returns before sampling weekly.
+    realised_vol = np.log(usdjpy).diff().rolling(20).std() * np.sqrt(252)
+    daily = pd.DataFrame({"usdjpy": usdjpy, "rv_20d": realised_vol, "vix": vix})
+    table = weekly_closes(daily)
+
+    # Load rate data and align monthly FRED release schedules with weekly data.
+    rates = pd.read_parquet(config.DIRECTORY / "fred_rates.parquet")
+    # A US monthly average is usable from the first day of the following month.
+    table = attach_monthly(table, rates["us_3m"], pd.offsets.MonthBegin(1))
+    # Use a two-month lag for the JP rate to avoid look-ahead bias.
+    table = attach_monthly(table, rates["jp_3m"], pd.DateOffset(months=2))
+    table = table.rename(columns={"us_3m": "us_rate", "jp_3m": "jp_rate"})
+
+    table["rate_diff"] = table["us_rate"] - table["jp_rate"]
+    table["carry_to_vol"] = table["rate_diff"] / 100 / table["rv_20d"]
+    table["vix_chg_4w"] = table["vix"].diff(4)
+
+    # Forward carry returns are targets, not model features.
+    table["fwd_carry_4w"] = np.log(table["usdjpy"].shift(-4) / table["usdjpy"]) + (
+        table["rate_diff"] / 100 * 28 / 365
+    )
+    table["fwd_carry_1w"] = np.log(table["usdjpy"].shift(-1) / table["usdjpy"]) + (
+        table["rate_diff"] / 100 * 7 / 365
+    )
+
+    # Positioning features use only on-time reports, starting on publication day.
+    cftc = pd.read_parquet(config.DIRECTORY / "cftc_jpy.parquet")
+    table = attach_monthly(table, positioning_features(cftc), pd.Timedelta(days=0))
+
+    # Credit growth is available only after the configured BIS release lag.
+    bis = pd.read_parquet(config.DIRECTORY / "bis_credit.parquet")
+    credit_yoy = bis["credit"].pct_change(4).rename("credit_yoy")
+    table = attach_monthly(
+        table,
+        credit_yoy,
+        pd.DateOffset(months=config.BIS_RELEASE_LAG_MONTHS),
+    )
+
+    # Sum interventions per week to align with the weekly table.
+    mof = pd.read_parquet(config.DIRECTORY / "mof_interventions.parquet")
+    buy = mof["amount_bn_jpy"].clip(lower=0).resample("W-FRI").sum()
+    sell = (-mof["amount_bn_jpy"]).clip(lower=0).resample("W-FRI").sum()
+    table["yen_buy_amt"] = buy.reindex(table.index).fillna(0)
+    table["yen_sell_amt"] = sell.reindex(table.index).fillna(0)
+
+    return table
 
 
-#load intervention data
-mof = pd.read_parquet(config.DIRECTORY / "mof_interventions.parquet")
-
-#sum per week to align with the weekly table
-buy = mof["amount_bn_jpy"].clip(lower=0).resample("W-FRI").sum()
-sell = (-mof["amount_bn_jpy"]).clip(lower=0).resample("W-FRI").sum()
-table["yen_buy_amt"] = buy.reindex(table.index).fillna(0)
-table["yen_sell_amt"] = sell.reindex(table.index).fillna(0)
-
-#write final table to parquet
-table.to_parquet(config.DIRECTORY / "modelling_table.parquet", index=True)
-
-#decide later whether to keep
-#T/F: was there an intervention in the 1 week/4 weeks the target looks over? (not features for the model, but useful for analysis & checking robustness of results (PHASE 5))
-def intervention_ahead(amount, weeks):
-    """ True if there is an intervention in any of the next `weeks` weeks """
-    return sum([amount.shift(-i) > 0 for i in range(1, weeks + 1)]) > 0
-
-buy_4w = intervention_ahead(table["yen_buy_amt"], 4)
-any_4w = buy_4w | intervention_ahead(table["yen_sell_amt"], 4)
+if __name__ == "__main__":
+    modelling_table = build_modelling_table()
+    modelling_table.to_parquet(
+        config.DIRECTORY / "modelling_table.parquet",
+        index=True,
+    )
