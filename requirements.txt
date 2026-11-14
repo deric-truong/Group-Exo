@@ -10,3 +10,4 @@ pyarrow
 jupyter
 pandas-datareader
 pytest
+statsmodels==0.15.0
