@@ -22,13 +22,16 @@ TODO
 
 ## Installation
 
+This project requires Python 3.11 or newer. Install that version first; using
+an older Python version will make the pinned pandas dependency fail to install.
+
 Create and activate a virtual environment from the repository root, then install
 the project's dependencies into it:
 
 macOS / Linux:
 
 ```bash
-python3 -m venv .venv
+python3.11 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
@@ -38,7 +41,7 @@ python -m pip install -e .
 Windows (PowerShell):
 
 ```powershell
-py -m venv .venv
+py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
