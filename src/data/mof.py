@@ -55,7 +55,7 @@ def parse_mof(content):
         encoding="cp932",  # Japanese Shift-JIS encoding
         header=None,
         dtype=str,
-    )
+    ).dropna(axis=1, how="all")  # MoF added empty trailing columns in Nov 2026
 
     # validate the file before using it: fail loudly if MoF changes the format
     if raw.shape[1] != 9:
