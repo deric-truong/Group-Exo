@@ -53,3 +53,12 @@
 | 2026-11-06 | MoF | Intervention True/False flags are not stored in the table; built in the robustness phase with `intervention_ahead()` | They use the future, so they must never be model features. Daily detail is published about five weeks after each quarter | Adam |
 | 2026-11-06 | Modelling table | Empty values (warm-up windows, last 4 weeks, a few missing prices) are left in the table and dropped at modelling time | Keeps the table complete and the choice visible | Adam |
 | 2026-11-09 | FRED | Treat `config.JP_3M_BREAK` (2025-01) as a structural break and include a robustness run excluding the post-break period | The underlying JP rate series changes at this point; the main table remains unchanged for now | Adam |
+
+# Quantile regressions decisions log (phase 3)
+
+| Date | Source | Decision | Reason | Author |
+|------|--------|----------|--------|--------|
+| 2026-11-11 | Quantile regressions | Target `fwd_carry_4w`; features `spec_net_z` (H2), `carry_to_vol` (H3), `vix` (market fear), `credit_yoy` (funding); weeks with a missing value dropped (1255 weeks, 2002-07 to 2026-08) | About 62 weeks in the 5% tail, so one feature per channel; `spec_net_pct_oi` (corr. 0.85 with `spec_net_z`), `rate_diff_known` (0.88 with `carry_to_vol`) and `rv_20d` (already in `carry_to_vol`) left out to avoid duplicates; MoF amounts are not features (published after the fact) | Thomas |
+| 2026-11-11 | Quantile regressions | Quantiles 5%, 50%, 95% and OLS; features scaled to mean 0, std 1 on the full sample | Coefficient = effect of +1 std on the return, comparable across features. Full-sample scaling is fine in-sample only; the walk-forward (phase 4) must scale on the training window | Thomas |
+| 2026-11-11 | Quantile regressions | 95% intervals from a moving block bootstrap: blocks of 12 weeks, 500 draws, seed 0, same method for all models | 4-week targets overlap by 3 weeks and the features are persistent, so default standard errors are too small | Thomas |
+| 2026-11-11 | Quantile regressions | Sign of `spec_net_z`: low = speculators unusually net short yen (crowded carry). H2 predicts a positive coefficient at the 5% quantile | `spec_net` < 0 means net short yen | Thomas |
