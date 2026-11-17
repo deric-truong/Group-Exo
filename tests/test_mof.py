@@ -50,10 +50,10 @@ def test_parse_rejects_wrong_totals():
         parse_mof(bad)
 
 
-def test_parse_ignores_trailing_empty_columns():
-    padded = b"\n".join(line + b",,,,,," for line in SAMPLE.splitlines())
-    df = parse_mof(padded)
-    assert list(df.index) == [pd.Timestamp("1991-05-13"), pd.Timestamp("2004-01-09")]
+def test_parse_ignores_empty_trailing_columns():
+    # Since Nov 2026 the MoF file ends each line with extra commas (empty columns)
+    padded = SAMPLE.replace(b"\n", b",,,,,,\n")
+    pd.testing.assert_frame_equal(parse_mof(padded), parse_mof(SAMPLE))
 
 
 def test_parse_rejects_other_files():

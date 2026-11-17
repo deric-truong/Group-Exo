@@ -55,7 +55,7 @@ def parse_mof(content):
         encoding="cp932",  # Japanese Shift-JIS encoding
         header=None,
         dtype=str,
-    )
+    ).dropna(axis=1, how="all")  # MoF added empty trailing columns in Nov 2026
 
     # The published CSV may contain trailing commas, which pandas reads as
     # extra all-empty columns. Ignore those without masking real schema changes.
