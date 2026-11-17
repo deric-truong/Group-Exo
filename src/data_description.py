@@ -34,7 +34,7 @@ for name, dataframe in dataframes.items():
 #MOF bar chart
 mof = dataframes["mof"]
 fig, ax = plt.subplots(figsize=(10, 4))
-ax.bar(mof["release_date"], mof["amount_bn_jpy"], width=20) 
+ax.bar(mof.index, mof["amount_bn_jpy"], width=20) 
 ax.axhline(0, color="black", linewidth=0.8)
 ax.set_title("MoF interventions")
 ax.set_xlabel("Date")

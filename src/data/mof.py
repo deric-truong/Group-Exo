@@ -57,6 +57,11 @@ def parse_mof(content):
         dtype=str,
     )
 
+    # The published CSV may contain trailing commas, which pandas reads as
+    # extra all-empty columns. Ignore those without masking real schema changes.
+    while raw.shape[1] > 9 and raw.iloc[:, -1].isna().all():
+        raw = raw.iloc[:, :-1]
+
     # validate the file before using it: fail loudly if MoF changes the format
     if raw.shape[1] != 9:
         raise ValueError(f"MoF file has {raw.shape[1]} columns, expected 9")

@@ -50,6 +50,12 @@ def test_parse_rejects_wrong_totals():
         parse_mof(bad)
 
 
+def test_parse_ignores_trailing_empty_columns():
+    padded = b"\n".join(line + b",,,,,," for line in SAMPLE.splitlines())
+    df = parse_mof(padded)
+    assert list(df.index) == [pd.Timestamp("1991-05-13"), pd.Timestamp("2004-01-09")]
+
+
 def test_parse_rejects_other_files():
     # check that the parser rejects a non-MoF file (e.g. an HTML error page)
     with pytest.raises(ValueError):
