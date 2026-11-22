@@ -9,6 +9,9 @@ TODO
 - **H1**: Carry returns exhibit negative skewness and fat left tails.
 - **H2**: Extreme speculative net-short yen positioning precedes lower forward carry returns.
 - **H3**: A high carry-to-volatility ratio precedes worse worst-case outcomes.
+- ⁠**H4**: Fast growth in yen credit to non-residents (BIS) precedes worse left-tail carry returns (funding channel).
+-⁠ ⁠**H5**: The quantile regression forecasts the 5% quantile out of sample better than the historical quantile and the volatility-scaled normal (walk-forward).
+
 
 ## Data sources
 
@@ -105,7 +108,7 @@ saved by the previous step:
 ```bash
 python -m src.modelling_table        # saves data/modelling_table.parquet (weekly features and targets)
 python -m src.quantile_regressions   # in-sample quantile regressions, saves results/quantile_coefs.*
-python -m src.walk_forward           # walk-forward validation (H4), saves results/walk_forward_*
+python -m src.walk_forward           # walk-forward validation (H5), saves results/walk_forward_*
 ```
 
 The walk-forward fits the quantile regression at each week on data known at
@@ -185,6 +188,9 @@ US–JP rate differential start at `ANALYSIS_START = 2002-04-01` (first jp_3m va
   15 hours before US markets, so the same date is not the same moment.
 - Gold (`GC=F`) and Brent (`BZ=F`) are continuous futures; prices can jump
   when one contract rolls into the next.
+
+- Breaches of overlapping 4-week targets cluster (lag-1 autocorrelation 0.43, 29 breaches), so Kupiec p-values are too optimistic. Using every 4th week only, coverage is 3.3-4.9%, and the conclusion is unchanged
+
 - TODO
 
 ## Team

@@ -20,7 +20,7 @@ from src.quantile_regressions import FEATURES, RESULTS, TARGET
 
 TAU = 0.05                          # default quantile we forecast (left tail)
 HORIZON = pd.Timedelta(weeks=4)     # default horizon of the forecast
-TRAIN_YEARS = 10                    # first training window (decision locked on 6 Nov 2020)
+TRAIN_YEARS = 10                    # first training window (decision locked on 6 Nov 2026)
 
 
 def load_data():
