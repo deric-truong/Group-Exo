@@ -97,6 +97,22 @@ One row per USD/JPY trading day, from `START` to `END`:
 CFTC reports delayed by a shutdown are left out of the `_known` columns; the
 last on-time report is carried forward instead.
 
+## Analysis
+
+Run each step from the repository root, in this order; each one reads the file
+saved by the previous step:
+
+```bash
+python -m src.modelling_table        # saves data/modelling_table.parquet (weekly features and targets)
+python -m src.quantile_regressions   # in-sample quantile regressions, saves results/quantile_coefs.*
+python -m src.walk_forward           # walk-forward validation (H4), saves results/walk_forward_*
+```
+
+The walk-forward fits the quantile regression at each week on data known at
+that date only (4-week embargo, features scaled on the training window), from
+July 2012, and compares its 5% quantile forecast with the historical quantile
+and a volatility-scaled normal (coverage, Kupiec test, pinball loss).
+
 ## Testing
 
 Tests check the saved files in `data/`, so fetch the data first.
@@ -104,7 +120,7 @@ A test file is skipped (not failed) if its data has not been downloaded.
 
 ```bash
 python -m pytest -v                      # run all tests
-python -m pytest tests/test_cftc.py -v   # run one source only (or test_bis.py, test_yahoo.py, test_mof.py, test_fred.py, test_cleaning.py)
+python -m pytest tests/test_cftc.py -v   # run one source only (or test_bis.py, test_yahoo.py, test_mof.py, test_fred.py, test_cleaning.py, test_modelling_table.py, test_walk_forward.py)
 python -m pytest -v tests/test_bis.py -v
 ```
 
