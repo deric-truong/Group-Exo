@@ -9,6 +9,9 @@ TODO
 - **H1**: Carry returns exhibit negative skewness and fat left tails.
 - **H2**: Extreme speculative net-short yen positioning precedes lower forward carry returns.
 - **H3**: A high carry-to-volatility ratio precedes worse worst-case outcomes.
+- **H4**: Faster growth in yen funding (credit_yoy) precedes lower forward carry returns.
+- **H5**: The quantile model forecasts the 5% quantile of 4-week carry returns better
+than simple benchmarks out-of-sample (walk-forward).
 
 ## Data sources
 
@@ -185,6 +188,9 @@ US–JP rate differential start at `ANALYSIS_START = 2002-04-01` (first jp_3m va
   15 hours before US markets, so the same date is not the same moment.
 - Gold (`GC=F`) and Brent (`BZ=F`) are continuous futures; prices can jump
   when one contract rolls into the next.
+
+- Breaches of overlapping 4-week targets cluster (lag-1 autocorrelation 0.43, 29 breaches), so Kupiec p-values are too optimistic. Using every 4th week only, coverage is 3.3-4.9%, and the conclusion is unchanged
+
 - TODO
 
 ## Team
