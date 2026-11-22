@@ -9,9 +9,9 @@ TODO
 - **H1**: Carry returns exhibit negative skewness and fat left tails.
 - **H2**: Extreme speculative net-short yen positioning precedes lower forward carry returns.
 - **H3**: A high carry-to-volatility ratio precedes worse worst-case outcomes.
-- **H4**: Faster growth in yen funding (credit_yoy) precedes lower forward carry returns.
-- **H5**: The quantile model forecasts the 5% quantile of 4-week carry returns better
-than simple benchmarks out-of-sample (walk-forward).
+- ⁠**H4**: Fast growth in yen credit to non-residents (BIS) precedes worse left-tail carry returns (funding channel).
+-⁠ ⁠**H5**: The quantile regression forecasts the 5% quantile out of sample better than the historical quantile and the volatility-scaled normal (walk-forward).
+
 
 ## Data sources
 
@@ -108,7 +108,7 @@ saved by the previous step:
 ```bash
 python -m src.modelling_table        # saves data/modelling_table.parquet (weekly features and targets)
 python -m src.quantile_regressions   # in-sample quantile regressions, saves results/quantile_coefs.*
-python -m src.walk_forward           # walk-forward validation (H4), saves results/walk_forward_*
+python -m src.walk_forward           # walk-forward validation (H5), saves results/walk_forward_*
 ```
 
 The walk-forward fits the quantile regression at each week on data known at
