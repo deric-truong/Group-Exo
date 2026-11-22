@@ -7,7 +7,7 @@ from matplotlib.ticker import PercentFormatter
 from src import config
 from src.data import bis, cftc, fred, mof, yahoo
 
-data_dir = config.ROOT / "raw data"
+data_dir = config.DIRECTORY
 eda = config.ROOT / "data_des"
 eda.mkdir(parents=True, exist_ok=True)
 
