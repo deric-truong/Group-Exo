@@ -24,23 +24,23 @@ N_BOOT = 500
 RESULTS = config.ROOT / "results"
 
 
-def load_data():
-    """Return complete weeks with features scaled to mean 0, std 1."""
+def load_data(target=TARGET):
+    """Return complete weeks for the target with features scaled to mean 0, std 1."""
     df = pd.read_parquet(config.DIRECTORY / "modelling_table.parquet")
-    df = df[[TARGET] + FEATURES].dropna()
+    df = df[[target] + FEATURES].dropna()
     # In-sample scaling: each coefficient is the effect of +1 std of the feature
     df[FEATURES] = (df[FEATURES] - df[FEATURES].mean()) / df[FEATURES].std()
     return df
 
 
-def fit(data, q):
+def fit(data, q, formula=FORMULA):
     """Return the coefficients of OLS (q=None) or of the quantile regression at q."""
     if q is None:
-        return smf.ols(FORMULA, data).fit().params
-    return smf.quantreg(FORMULA, data).fit(q=q).params
+        return smf.ols(formula, data).fit().params
+    return smf.quantreg(formula, data).fit(q=q).params
 
 
-def block_bootstrap(df, q, seed=0):
+def block_bootstrap(df, q, seed=0, formula=FORMULA):
     """95% confidence interval of each coefficient (moving block bootstrap)."""
     rng = np.random.default_rng(seed)
     n = len(df)
@@ -48,7 +48,7 @@ def block_bootstrap(df, q, seed=0):
     for _ in range(N_BOOT):
         starts = rng.integers(0, n - BLOCK + 1, size=n // BLOCK + 1)
         rows = (starts[:, None] + np.arange(BLOCK)).ravel()[:n]
-        coefs.append(fit(df.iloc[rows], q))
+        coefs.append(fit(df.iloc[rows], q, formula=formula))
     return pd.DataFrame(coefs).quantile([0.025, 0.975])
 
 
