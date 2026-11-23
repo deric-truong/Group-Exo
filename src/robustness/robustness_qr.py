@@ -3,18 +3,18 @@
 #variations: change one per run and keep everything else the same
 #1. use 1-week forward carry instead of 4-week
 #2. use quantile level 10% instead of 5%
-#3. start sample from 2010 instead of 2000
+#3. start sample from 2010 instead of 2002
 #4. exclude 2024 unwind from sample
-#5. exclude weeks before MoF intervention
+#5. exclude post-2025 rate break
+#6. exclude weeks before MoF intervention
+#7. use 6 months as BIS release date lag instead of 4 months
 
 import pandas as pd
 from src import config
 from src import quantile_regressions as qr
+from src.walk_forward import load_data, score, walk_forward
 
 TAU = 0.05
-
-
-""" QUANTILE REGRESSION """
 
 #T/F MoF intervention feature that we decided to remove from `modellin_table` to use in `robustness` instead
 def intervention_ahead(amount, weeks):
@@ -35,6 +35,7 @@ def run_one(name, df, target, tau):
 #sets out in code the variations that we are interested in, runs the regressions, checks sign alignment, saves results
 def run():
     raw = pd.read_parquet(config.DIRECTORY / "modelling_table.parquet") #Thomas' loader throws away intervention columns, so we need to bring them back from `modelling_table`
+    
     d4 = qr.load_data() # 4-week target
     d1 = qr.load_data("fwd_carry_1w") # 1-week target
 
@@ -56,7 +57,7 @@ def run():
         ("6-month BIS lag", d4_lag, "fwd_carry_4w", TAU),
     ]
 
-    #runs regression for for each variation and stacks results in a table
+    #runs regression for each variation and stacks results in a table
     table = pd.concat([run_one(*r) for r in runs], ignore_index=True) 
 
     
@@ -67,9 +68,10 @@ def run():
     table["excludes_zero"] = (table["ci_low"] > 0) | (table["ci_high"] < 0) #marks a row true when the whole 95% interval is above zero (chose to add this because none of the coefficients are statistically significant anyway)
 
     qr.RESULTS.mkdir(exist_ok=True)
-    table.to_csv(qr.RESULTS / "robustness.csv", index=False)
+    table.to_csv(qr.RESULTS / "robustness_qr.csv", index=False)
     return table
 
 #need this to prevet launching the whole analysis (including lengthy bootstrap) when importing the file
 if __name__ == "__main__":
     print(run().round(4).to_string(index=False))
+
