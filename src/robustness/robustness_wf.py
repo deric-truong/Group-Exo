@@ -12,7 +12,7 @@
 import pandas as pd
 from src import config
 from src.quantile_regressions import RESULTS
-from src.robustness_qr import intervention_ahead
+from src.robustness.robustness_qr import intervention_ahead
 from src.walk_forward import load_data, score, walk_forward
 
 def summarise(name, fc, tau):
