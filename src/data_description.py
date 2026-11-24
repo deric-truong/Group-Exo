@@ -20,13 +20,36 @@ dataframes = {name: pd.read_parquet(data_dir / module.OUTPUT_FILE.name)
 for name, dataframe in dataframes.items():
     dataframe.describe().to_csv(eda / f"sumstats_{name}.csv")
 
-#time series plots
+#time series plots: title and unit of each series
+LABELS = {
+    "usdjpy": ("USD/JPY exchange rate", "JPY per USD"),
+    "nikkei": ("Nikkei 225 (Japan stocks)", "Index points"),
+    "nasdaq": ("Nasdaq Composite (US tech stocks)", "Index points"),
+    "sp500": ("S&P 500 (US stocks)", "Index points"),
+    "bitcoin": ("Bitcoin", "USD"),
+    "usdmxn": ("USD/MXN exchange rate", "MXN per USD"),
+    "gold": ("Gold", "USD per ounce"),
+    "brent": ("Brent crude oil", "USD per barrel"),
+    "vix": ("VIX (US stock market fear index)", "Index points"),
+    "us_3m": ("US 3-month interbank rate", "% per year"),
+    "jp_3m": ("Japan 3-month interbank rate", "% per year"),
+    "open_interest": ("Yen futures: all open contracts", "Contracts"),
+    "spec_long": ("Speculators betting on a stronger yen", "Contracts"),
+    "spec_short": ("Speculators betting on a weaker yen", "Contracts"),
+    "spec_net": ("Speculators' net position (< 0 = against the yen)", "Contracts"),
+    "spec_net_pct_oi": ("Net position as a share of open contracts", "Share"),
+    "credit": ("Yen credit to borrowers outside Japan (BIS)", "Trillion JPY"),
+}
 skip = ["release_date"]
 for name, dataframe in dataframes.items():
     if name == "mof":
         continue  # skip MOF because it is not continuous
     cols = [c for c in dataframe.select_dtypes("number").columns if c not in skip]
-    dataframe[cols].plot(subplots=True, figsize=(10, 2.5 * len(cols)))
+    axes = dataframe[cols].plot(subplots=True, legend=False, figsize=(10, 2.5 * len(cols)))
+    for ax, col in zip(axes, cols):
+        ax.set_title(LABELS[col][0], fontsize=10)
+        ax.set_ylabel(LABELS[col][1])
+    axes[-1].set_xlabel("Date")
     fig = plt.gcf()
     fig.savefig(eda / f"plot_{name}.png", bbox_inches="tight")
     plt.close(fig)
