@@ -2,26 +2,26 @@
 
 ## Research question
 
-TODO
+How does the left tail of yen carry trade returns depend on speculative positioning, volatility and funding conditions, and does that relationship hold out of sample? The August 2024 unwind is the motivating episode.
 
 ## Hypotheses
 
 - **H1**: Carry returns exhibit negative skewness and fat left tails.
 - **H2**: Extreme speculative net-short yen positioning precedes lower forward carry returns.
 - **H3**: A high carry-to-volatility ratio precedes worse worst-case outcomes.
-- ⁠**H4**: Fast growth in yen credit to non-residents (BIS) precedes worse left-tail carry returns (funding channel).
--⁠ ⁠**H5**: The quantile regression forecasts the 5% quantile out of sample better than the historical quantile and the volatility-scaled normal (walk-forward).
+- **H4**: Fast growth in yen credit to non-residents (BIS) precedes worse left-tail carry returns (funding channel).
+- **H5**: The quantile regression forecasts the 5% quantile out of sample better than the historical quantile and the volatility-scaled normal (walk-forward).
 
 
 ## Data sources
 
 | Source | Data | Module | Owner |
 |--------|------|--------|-------|
-| Yahoo Finance | FX, equities, Bitcoin, commodities | `src/data/yahoo.py` | TODO |
-| FRED | US/Japan 3-month interbank rates (monthly, %) | `src/data/fred.py` | TODO |
-| CFTC | Yen futures positioning | `src/data/cftc.py` | TODO |
-| BIS | Yen credit to borrowers outside Japan (quarterly, tn JPY) | `src/data/bis.py` | TODO |
-| MoF Japan | FX interventions | `src/data/mof.py` | TODO |
+| Yahoo Finance | FX, equities, Bitcoin, commodities | `src/data/yahoo.py` | Adam |
+| FRED | US/Japan 3-month interbank rates (monthly, %) | `src/data/fred.py` | Deric |
+| CFTC | Yen futures positioning | `src/data/cftc.py` | Thomas |
+| BIS | Yen credit to borrowers outside Japan (quarterly, tn JPY) | `src/data/bis.py` | Adam |
+| MoF Japan | FX interventions | `src/data/mof.py` | Thomas |
 
 ## Installation
 
@@ -106,9 +106,13 @@ Run each step from the repository root, in this order; each one reads the file
 saved by the previous step:
 
 ```bash
-python -m src.modelling_table        # saves data/modelling_table.parquet (weekly features and targets)
-python -m src.quantile_regressions   # in-sample quantile regressions, saves results/quantile_coefs.*
-python -m src.walk_forward           # walk-forward validation (H5), saves results/walk_forward_*
+python -m src.modelling_table            # saves data/modelling_table.parquet (weekly features and targets)
+python -m src.data_description           # summary statistics and plots, saves data_des/*
+python -m src.skewness_kurtosis          # H1: skewness and excess kurtosis of carry returns
+python -m src.quantile_regressions       # H2-H4: in-sample quantile regressions, saves results/quantile_coefs.*
+python -m src.walk_forward               # H5: walk-forward validation, saves results/walk_forward_*
+python -m src.robustness.robustness_qr   # robustness of the quantile regressions, saves results/robustness_qr.csv
+python -m src.robustness.robustness_wf   # robustness of the walk-forward, saves results/robustness_wf.csv
 ```
 
 The walk-forward fits the quantile regression at each week on data known at
@@ -138,7 +142,8 @@ src/config.py    analysis window, tickers, series IDs
 src/data/        one retrieval module per source
 src/             cleaning and analysis modules
 tests/           checks on the downloaded data (pytest)
-notebooks/       individual exploration notebooks
+results/         outputs of the analysis (tables and figures)
+data_des/        outputs of the data description
 docs/            data cleaning decisions log
 ```
 
@@ -189,10 +194,15 @@ US–JP rate differential start at `ANALYSIS_START = 2002-04-01` (first jp_3m va
 - Gold (`GC=F`) and Brent (`BZ=F`) are continuous futures; prices can jump
   when one contract rolls into the next.
 
-- Breaches of overlapping 4-week targets cluster (lag-1 autocorrelation 0.43, 29 breaches), so Kupiec p-values are too optimistic. Using every 4th week only, coverage is 3.3-4.9%, and the conclusion is unchanged
-
-- TODO
+- Breaches of overlapping 4-week targets cluster (lag-1 autocorrelation 0.43, 29 breaches), so Kupiec p-values are too optimistic. Using every 4th week only, coverage is 3.3-4.9%, and the conclusion is unchanged.
+- Only about 62 weeks fall in the worst 5% of 4-week carry returns, so tail estimates are imprecise and the August 2024 unwind weighs a lot on them.
 
 ## Team
 
-TODO
+| Member | Data retrieval | Analysis | Reviewed |
+|--------|----------------|----------|----------|
+| Adam Ouertani | Yahoo Finance, BIS | Modelling table, data description (H1), robustness checks | Quantile regressions |
+| Quang Khai (Deric) Truong | FRED | Data validation, cleaning and merge, walk-forward validation (H5) | Robustness checks |
+| Thomas Boulier | CFTC, MoF | Quantile regressions (H2-H4) | Modelling table, data description, walk-forward validation |
+
+Each member wrote up their own phases in the report, reviewed by a teammate who did not write the section.
