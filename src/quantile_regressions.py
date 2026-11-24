@@ -37,7 +37,7 @@ def fit(data, q, formula=FORMULA):
     """Return the coefficients of OLS (q=None) or of the quantile regression at q."""
     if q is None:
         return smf.ols(formula, data).fit().params
-    return smf.quantreg(formula, data).fit(q=q).params
+    return smf.quantreg(formula, data).fit(q=q, max_iter=5000).params
 
 
 def block_bootstrap(df, q, seed=0, formula=FORMULA):
