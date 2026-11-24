@@ -81,6 +81,7 @@ def kupiec_pvalue(hits, tau=TAU):
     Kupiec test p-value: is the breach rate compatible with tau?
     H0: the realised quantile is correct, i.e. the realised hits are Bernoulli(tau).
     H1: the realised quantile is incorrect, i.e. the realised hits are Bernoulli(p) with p != tau.
+    A Low p-value means the forecast is BADLY calibrated, i.e. the realised quantile is not compatible with tau.
     """
     n, x = len(hits), int(hits.sum())
     if x in (0,n):
@@ -93,16 +94,25 @@ def kupiec_pvalue(hits, tau=TAU):
     return 1 - stats.chi2.cdf(lr, df=1)
 
 # fc = forecast
+"""
+model = quantile regression forecast
+hist = historical quantile forecast (naive benchmark #1)
+normal = volatility-scaled normal forecast (native benchmark #2)
+"""
+
+
 def score(fc, tau=TAU):
     """Coverage, Kupiec p-value, pinball loss and skill versus the historical quantile."""
     out = {}
     for m in ["model", "hist", "normal"]:
-        hits = fc["realised"] < fc[m]
+        hits = fc["realised"] < fc[m] # check if the realised return fell below the predicted 5%
+        # true means BREACHED: the realised return fell below the predicted 5% quantile.
         out[m] = {
             "coverage": hits.mean(),
             "kupiec_p": kupiec_pvalue(hits, tau),
             "pinball": pinball(fc["realised"], fc[m], tau),
         }
+
     table = pd.DataFrame(out).T
     table["skill_vs_hist"] = 1 - table["pinball"] / table.loc["hist", "pinball"]
     return table
